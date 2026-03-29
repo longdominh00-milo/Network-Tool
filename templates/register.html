@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - Network Admin Tool</title>
+    <link rel="icon" type="image/png" href="/static/ArsenalFC_imresizer.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: { 
+                extend: { 
+                    animation: { 
+                        'fade-in-up': 'fade-in-up 0.8s ease-out forwards', 
+                        'starfall': 'starfall linear infinite', 
+                    }, 
+                    keyframes: { 
+                        'fade-in-up': { 
+                            '0%': { opacity: '0', transform: 'translateY(20px)' }, 
+                            '100%': { opacity: '1', transform: 'translateY(0)' }, 
+                        }, 
+                        starfall: { 
+                            'from': { transform: 'translateY(-20px)' }, 
+                            'to': { transform: 'translateY(105vh)' } 
+                        } 
+                    } 
+                } 
+            },
+            plugins: [],
+        }
+    </script>
+</head>
+<body class="bg-black text-gray-200">
+    <div id="star-container" class="fixed inset-0 z-[-10] pointer-events-none"></div>
+    <div class="container mx-auto justify-center p-4 min-h-screen flex items-center">
+        <div id="main-card" class="relative w-full max-w-md mx-auto bg-gray-950/60 backdrop-blur-xl border border-lime-500/20 rounded-2xl shadow-2xl shadow-lime-500/10 p-8 opacity-0 animate-fade-in-up">
+            
+            <div class="text-center mb-8">
+                <h1 class="text-3xl font-bold text-white tracking-tight">Create Account</h1>
+            </div>
+            
+            <form id="register-form">
+                <div class="mb-5">
+                    <label for="username" class="block text-sm font-medium text-slate-300 mb-2">Username</label>
+                    <input type="text" id="username" class="block w-full text-sm bg-slate-800/80 border-slate-600 rounded-lg shadow-sm py-2.5 px-4 focus:ring-2 focus:ring-lime-400 focus:border-lime-400 focus:outline-none transition-all" required>
+                </div>
+                <div class="mb-5">
+                    <label for="password" class="block text-sm font-medium text-slate-300 mb-2">Password</label>
+                    <input type="password" id="password" class="block w-full text-sm bg-slate-800/80 border-slate-600 rounded-lg shadow-sm py-2.5 px-4 focus:ring-2 focus:ring-lime-400 focus:border-lime-400 focus:outline-none transition-all" required>
+                </div>
+                <div class="mb-6">
+                    <label for="confirm-password" class="block text-sm font-medium text-slate-300 mb-2">Confirm Password</label>
+                    <input type="password" id="confirm-password" class="block w-full text-sm bg-slate-800/80 border-slate-600 rounded-lg shadow-sm py-2.5 px-4 focus:ring-2 focus:ring-lime-400 focus:border-lime-400 focus:outline-none transition-all" required>
+                </div>
+                <button type="submit" id="register-button" class="w-full flex justify-center py-3 px-4 rounded-lg shadow-lg shadow-lime-500/20 text-sm font-bold text-slate-900 bg-lime-400 hover:bg-lime-300 hover:shadow-lime-400/40 focus:outline-none focus:ring-4 focus:ring-lime-500/50 active:scale-[0.98] transition-all duration-200">
+                    Register
+                </button>
+            </form>
+            <p id="error-message" class="text-red-400 text-center mt-4 text-sm min-h-[20px]"></p>
+            <p class="text-center mt-4 text-sm text-slate-400">
+                Already have an account? <a href="/login" class="text-lime-400 hover:underline">Login</a>
+            </p>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Hiệu ứng sao rơi
+            const starContainer = document.getElementById('star-container');
+            if (starContainer) { 
+                for (let i = 0; i < 150; i++) { 
+                    const star = document.createElement('div'); 
+                    star.className = 'absolute bg-white rounded-full animate-starfall'; 
+                    const size = Math.random() * 2 + 0.5; 
+                    star.style.width = `${size}px`; 
+                    star.style.height = `${size}px`; 
+                    star.style.left = `${Math.random() * 100}%`; 
+                    star.style.animationDuration = `${Math.random() * 3 + 2}s`; 
+                    star.style.animationDelay = `${Math.random() * 5}s`; 
+                    star.style.opacity = Math.random() * 0.5 + 0.5; 
+                    starContainer.appendChild(star); 
+                } 
+            }
+
+            // Logic xử lý form đăng ký
+            const registerForm = document.getElementById('register-form');
+            const registerButton = document.getElementById('register-button');
+            const errorMessage = document.getElementById('error-message');
+
+            registerForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                errorMessage.textContent = '';
+                
+                const username = document.getElementById('username').value;
+                const password = document.getElementById('password').value;
+                const confirmPassword = document.getElementById('confirm-password').value;
+
+                if (password !== confirmPassword) {
+                    errorMessage.textContent = 'Passwords do not match.';
+                    return;
+                }
+
+                registerButton.disabled = true;
+                registerButton.textContent = 'Registering...';
+
+                try {
+                    const response = await fetch('/register', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ username, password })
+                    });
+                    const result = await response.json();
+
+                    if (result.success) {
+                        alert('Account created successfully! Please login.');
+                        window.location.href = result.redirect;
+                    } else {
+                        errorMessage.textContent = result.message || 'An unknown error occurred.';
+                    }
+                } catch (error) {
+                    errorMessage.textContent = 'Failed to connect to the server.';
+                } finally {
+                    registerButton.disabled = false;
+                    registerButton.textContent = 'Register';
+                }
+            });
+        });
+    </script>
+</body>
+</html>

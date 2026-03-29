@@ -1,0 +1,38 @@
+# Ignore các file/thư mục không cần thiết khi build Docker image
+
+# Python cache
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Virtual environment
+venv/
+.venv/
+env/
+
+# VSCode settings
+.vscode/
+
+# Git
+.git/
+.gitignore
+
+# Docker files (không cần copy vào image)
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# File thực thi của venv (được symlink, không dùng trong container)
+dotenv
+flask
+f2py
+f2py3
+f2py3.8
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
