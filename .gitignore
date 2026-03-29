@@ -1,0 +1,12 @@
+# Bỏ qua thư mục rác của Python
+    __pycache__/
+    *.py[cod]
+
+    # Bỏ qua môi trường ảo
+    venv/
+    .env
+    
+    # Bỏ qua file của hệ điều hành
+    .DS_Store
+    Thumbs.db
+    ```
