@@ -1,0 +1,53 @@
+version: "3.9"
+
+services:
+  network-tool:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: network-tool:latest
+    container_name: network-tool
+
+    # ----------------------------------------------------------------
+    # QUAN TRỌNG: Dùng host network để:
+    #   1. Lệnh `ip -4 addr` trong container thấy được IP thật của server
+    #      (dùng trong network_tool.py -> get_srv_ips())
+    #   2. ping/mtr/traceroute bind đúng interface IP của server
+    # ----------------------------------------------------------------
+    network_mode: host
+
+    # ----------------------------------------------------------------
+    # Capabilities cần thiết cho các lệnh raw socket:
+    #   - NET_RAW  : ping, hping3, traceroute (ICMP/raw)
+    #   - NET_ADMIN: mtr, ip addr
+    # ----------------------------------------------------------------
+    cap_add:
+      - NET_RAW
+      - NET_ADMIN
+
+    # ----------------------------------------------------------------
+    # Restart policy
+    # ----------------------------------------------------------------
+    restart: unless-stopped
+
+    # ----------------------------------------------------------------
+    # Biến môi trường
+    # ----------------------------------------------------------------
+    environment:
+      - FLASK_APP=app.py
+      - PYTHONUNBUFFERED=1
+
+    # ----------------------------------------------------------------
+    # Volume để persist users.json (dữ liệu người dùng)
+    # ----------------------------------------------------------------
+    volumes:
+      - ./users.json:/app/users.json
+
+    # ----------------------------------------------------------------
+    # Logs
+    # ----------------------------------------------------------------
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
