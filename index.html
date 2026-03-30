@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Optimized Tool</title>
+    <link href="data:image/x-icon;base64,AAABAAEAEBAQAAEABAAoAQAAFgAAACgAAAAQAAAAIAAAAAEABAAAAAAAgAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA/wAAAH8AAAB/AAAAPwAAAD8AAIAvAADADwAA4D8AAPA/AAD4AwAA+B8AAPgAAAD4AAAA+QAAAPgAAAD8AQAA" rel="icon" type="image/x-icon">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: { 
+                extend: { 
+                    animation: { 
+                        'fade-in-up': 'fade-in-up 0.8s ease-out forwards', 
+                        'starfall': 'starfall linear infinite', 
+                    }, 
+                    keyframes: { 
+                        'fade-in-up': { 
+                            '0%': { opacity: '0', transform: 'translateY(20px)' }, 
+                            '100%': { opacity: '1', transform: 'translateY(0)' }, 
+                        }, 
+                        starfall: { 
+                            'from': { transform: 'translateY(-20px)' }, 
+                            'to': { transform: 'translateY(105vh)' } 
+                        } 
+                    } 
+                } 
+            },
+            plugins: [],
+        }
+    </script>
+    <style type="text/tailwindcss">
+        .sortable { cursor: pointer; }
+        .sortable:hover { color: #84cc16; }
+        .sort-asc::after { content: ' ▲'; font-size: 0.8em; }
+        .sort-desc::after { content: ' ▼'; font-size: 0.8em; }
+        .custom-select-option {
+            @apply px-3 py-2 text-slate-100 cursor-pointer;
+        }
+        .custom-select-option:hover {
+            @apply bg-lime-700;
+        }
+        .custom-select-option.optgroup-label {
+            @apply font-medium mb-2 text-sm pointer-events-none px-2 pt-2;
+        }
+    </style>
+</head>
+<body class="bg-black text-gray-200">
+    <div id="star-container" class="fixed inset-0 z-[-10] pointer-events-none"></div>
+    <div class="container mx-auto justify-center p-4 py-12 sm:py-16">
+        <div id="main-card" class="relative w-full max-w-5xl mx-auto bg-gray-950/60 backdrop-blur-xl border border-lime-500/20 rounded-2xl shadow-2xl shadow-lime-500/10 p-6 md:p-8 opacity-0 animate-fade-in-up">
+            <div class="absolute top-4 right-6 flex items-center space-x-4">
+                <span class="text-sm text-pink-400 font-medium">From Long.DM with ❤️</span>
+            </div>
+            <div class="mb-6 border-b border-slate-700">
+                <nav class="flex -mb-px space-x-6" aria-label="Tabs">
+                    <button id="tab-test" class="tab-btn whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm border-lime-400 text-lime-400">Network Test</button>
+                    <button id="tab-optimize" class="tab-btn whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm border-transparent text-slate-400 hover:text-slate-300 hover:border-slate-400">Outbound Optimizer</button>
+                    <button id="tab-inbound" class="tab-btn whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm border-transparent text-slate-400 hover:text-slate-300 hover:border-slate-400">Inbound Optimizer</button>
+                </nav>
+            </div>
+
+            <div>
+                <div id="content-test" class="tab-content">
+                    <div class="text-center mb-8">
+                        <h1 class="text-3xl md:text-4xl font-bold text-white tracking-tight">
+                            <span class="text-2xl animate-twinkle-title">✨</span>
+                            Network Tool
+                            <span class="text-2xl animate-twinkle-title" style="animation-delay: 0.2s;">✨</span>
+                        </h1>
+                    </div>
+                    <form id="test-form" autocomplete="off">
+                        <fieldset id="form-fieldset">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 mb-6">
+                                <div>
+                                    <label for="dest" class="block text-sm font-medium text-slate-300 mb-2">Destination IP</label>
+                                    <input type="text" id="dest" name="dest" class="block w-full text-sm bg-slate-800/80 border-slate-600 rounded-lg shadow-sm py-2.5 px-4 focus:ring-2 focus:ring-lime-400 focus:border-lime-400 focus:outline-none transition-all" placeholder="e.g., 8.8.8.8" required>
+                                    <div id="isp-suggestion" class="text-xs text-slate-400 mt-2 min-h-[16px] space-y-1"></div>
+                                </div>
+                                <div>
+                                    <label for="source-input" class="block text-sm font-medium text-slate-300 mb-2">Source</label>
+                                    <div class="relative" id="source-container">
+                                        <input type="text" id="source-input" class="block w-full text-sm bg-slate-800/80 border-slate-600 rounded-lg shadow-sm py-2.5 px-4 focus:ring-2 focus:ring-lime-400 focus:border-lime-400 focus:outline-none transition-all" placeholder="Select or search for a source...">
+                                        <input type="hidden" id="source-hidden-value">
+                                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-400">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.5 8.25l-7.5 7.5-7.5-7.5"></path></svg>
+                                        </div>
+                                        <div id="source-options-container" class="absolute z-10 w-full bg-slate-800 border border-slate-700 rounded-lg mt-1 shadow-lg max-h-60 overflow-y-auto hidden">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="dynamic-controls">
+                                <div id="default-controls">
+                                    </div>
+                                <div id="comparison-controls" class="hidden text-center">
+                                    <p class="text-sm text-slate-400 mb-4">This upstream has 2 available IPs. You can run a comprehensive comparison.</p>
+                                    <button type="button" id="run-comparison-button" class="w-full flex justify-center py-3 px-4 rounded-lg shadow-lg shadow-teal-500/20 text-sm font-bold text-white bg-teal-500 hover:bg-teal-600 focus:outline-none focus:ring-4 focus:ring-teal-500/50 active:scale-[0.98] transition-all duration-200">
+                                        Run 2-IP Comparison
+                                    </button>
+                                </div>
+                            </div>                      
+                            <div class="mb-6">
+                                <label class="block text-sm font-medium text-slate-300 mb-2">Test Type</label>
+                                <div id="test-type-group" class="flex items-center gap-x-6">
+                                    <label for="ping" class="flex items-center cursor-pointer">
+                                        <input type="radio" id="ping" name="test-type" value="ping" class="sr-only peer" checked>
+                                        <div class="w-5 h-5 rounded-full border-2 border-slate-500 peer-checked:bg-lime-400 peer-checked:border-lime-400 transition-colors duration-150"></div>
+                                        <span class="ml-2 block text-sm text-slate-200">Ping</span>
+                                    </label>
+
+                                    <label for="mtr" class="flex items-center cursor-pointer">
+                                        <input type="radio" id="mtr" name="test-type" value="mtr" class="sr-only peer">
+                                        <div class="w-5 h-5 rounded-full border-2 border-slate-500 peer-checked:bg-lime-400 peer-checked:border-lime-400 transition-colors duration-150"></div>
+                                        <span class="ml-2 block text-sm text-slate-200">MTR</span>
+                                    </label>
+
+                                    <label for="traceroute" class="flex items-center cursor-pointer">
+                                        <input type="radio" id="traceroute" name="test-type" value="traceroute" class="sr-only peer">
+                                        <div class="w-5 h-5 rounded-full border-2 border-slate-500 peer-checked:bg-lime-400 peer-checked:border-lime-400 transition-colors duration-150"></div>
+                                        <span class="ml-2 block text-sm text-slate-200">Traceroute</span>
+                                    </label>
+                                    <!-- <label class="flex items-center cursor-pointer">
+                                        <input type="radio" id="tcppping" name="test-type" value="tcppping" class="sr-only peer">
+                                        <div class="w-5 h-5 rounded-full border-2 border-slate-500 peer-checked:bg-lime-400 peer-checked:border-lime-400 transition-colors duration-150"></div>
+                                        <span class="ml-2 block text-sm text-slate-200">TCP Ping</span>
+                                    </label> -->
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 mb-8">
+                                <div><label for="count" class="block text-sm font-medium text-slate-300 mb-2">Count</label>
+                                    <input type="number" id="count" name="count" class="block w-full text-sm bg-slate-800/80 border-slate-600 rounded-lg shadow-sm py-2.5 px-4 focus:ring-2 focus:ring-lime-400 focus:border-lime-400 focus:outline-none transition-all" value="10" min="1">
+                                </div>
+                                <div>
+                                    <label for="interval" class="block text-sm font-medium text-slate-300 mb-2">Interval (s)</label>
+                                    <input type="number" id="interval" name="interval" class="block w-full text-sm bg-slate-800/80 border-slate-600 rounded-lg shadow-sm py-2.5 px-4 focus:ring-2 focus:ring-lime-400 focus:border-lime-400 focus:outline-none transition-all" value="0.01" min="0.01" step="0.01">
+                                </div>
+                            </div>
+                            <div id="port-container" class="hidden">
+                                <label for="tcp-port" class="block text-sm font-medium text-slate-300 mb-2">Port</label>
+                                <input type="number" id="tcp-port" class="block w-full mb-6 text-sm bg-slate-800/80 border-slate-600 rounded-lg shadow-sm py-2.5 px-4 focus:ring-2 focus:ring-lime-400 focus:border-lime-400 focus:outline-none transition-all" value="443" min="1" max="65535">
+                            </div>
+                            <button type="submit" id="run-test-button" class="w-full flex justify-center py-3 px-4 rounded-lg shadow-lg shadow-lime-500/20 text-sm font-bold text-slate-900 bg-lime-400 hover:bg-lime-300 hover:shadow-lime-400/40 focus:outline-none focus:ring-4 focus:ring-lime-500/50 active:scale-[0.98] transition-all duration-200">Submit</button>
+                        </fieldset>
+                    </form>
+                    <div id="nslookup-tool" class="mt-8 pt-6 border-t border-slate-700">
+                        <div class="text-center mb-6">
+                            <h2 class="text-xl font-semibold text-blue-400">DNS Lookup</h2>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                            <div class="md:col-span-2">
+                                <label for="domain-input" class="block text-sm font-medium text-slate-300 mb-2">Domain</label>
+                                <input type="text" id="domain-input" autocomplete="off" class="block w-full text-sm bg-slate-800/80 border-slate-600 rounded-lg shadow-sm py-2.5 px-4 focus:ring-2 focus:ring-lime-400 focus:border-lime-400 focus:outline-none transition-all" placeholder="e.g., google.com">
+                            </div>
+                            <div>
+                                <label for="dns-server-input" class="block text-sm font-medium text-slate-300 mb-2">DNS Server</label>
+                                <input type="text" id="dns-server-input" class="block w-full text-sm bg-slate-800/80 border-slate-600 rounded-lg shadow-sm py-2.5 px-4 focus:ring-2 focus:ring-lime-400 focus:border-lime-400 focus:outline-none transition-all" placeholder="Input your DNS server" value="8.8.8.8">
+                            </div>
+                            <div>
+                                <button type="button" id="nslookup-btn" class="w-full flex justify-center py-2.5 px-4 rounded-lg shadow-md text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 transition-colors">
+                                    Lookup
+                                </button>
+                            </div>
+                        </div>
+                        <pre id="nslookup-results" class="mt-4 bg-gray-950/70 rounded-lg p-4 font-mono text-sm overflow-x-auto min-h-[50px] transition-all"></pre>
+                    </div>
+                    <div id="results-container" class="mt-8 pt-6 border-t border-lime-500/20">
+                        <div id="loader" style="display: none;">
+                            <div class="w-10 h-10 border-4 border-slate-600 border-t-lime-500 rounded-full animate-spin mx-auto"></div>
+                        </div>
+                        <div id="results-table-container" class="overflow-x-auto"></div>
+                        <pre id="raw-results" class="bg-gray-950/70 rounded-lg p-4 font-mono text-sm overflow-x-auto min-h-[50px] transition-all hidden"></pre>
+                    </div>
+                </div>
+
+                <div id="content-optimize" class="tab-content hidden">
+                    <div class="text-center mb-8">
+                        <h1 class="text-3xl md:text-4xl font-bold text-white tracking-tight">
+                            <span class="text-2xl animate-twinkle-title">✨</span>
+                            Outbound Optimizer (BGP protocol next-hop)
+                            <span class="text-2xl animate-twinkle-title" style="animation-delay: 0.2s;">✨</span></h1>
+                        <p class="text-red-400/80 mt-2 font-semibold">Caution: This will change network configuration.</p>
+                    </div>
+                    <form id="optimize-form" autocomplete="off">
+                        <fieldset id="optimize-fieldset">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                                <div>
+                                    <label for="optimize-dest" class="block text-sm font-medium text-slate-300 mb-2">Destination IP</label>
+                                    <input type="text" id="optimize-dest" class="block w-full text-sm bg-slate-800/80 border-slate-600 rounded-lg shadow-sm py-2.5 px-4 focus:ring-2 focus:ring-lime-400 focus:border-lime-400 focus:outline-none transition-all" placeholder="e.g., 149.96.38.54/32" required>
+                                </div>
+                                <div>
+                                    <label for="optimize-upstream" class="block text-sm font-medium text-slate-300 mb-2">Optimize via Upstream</label>
+                                    <div class="relative">
+                                        <select id="optimize-upstream" class="block w-full text-sm bg-slate-800/80 border-slate-600 rounded-lg shadow-sm py-2.5 pl-4 pr-10 focus:ring-2 focus:ring-lime-400 focus:border-lime-400 focus:outline-none transition-all appearance-none"></select>
+                                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-400">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.5 8.25l-7.5 7.5-7.5-7.5"></path></svg>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                                <div>
+                                    <label for="juniper-user" class="block text-sm font-medium text-slate-300 mb-2">TACACS+ Username</label>
+                                    <div class="relative">
+                                        <select id="juniper-user" class="block w-full text-sm bg-slate-800/80 border-slate-600 rounded-lg shadow-sm py-2.5 pl-4 pr-10 focus:ring-2 focus:ring-lime-400 focus:border-lime-400 focus:outline-none transition-all appearance-none">
+                                            </select>
+                                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-400">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.5 8.25l-7.5 7.5-7.5-7.5"></path></svg>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label for="juniper-pass" class="block text-sm font-medium text-slate-300 mb-2">TACACS+ Password</label>
+                                    <input type="password" id="juniper-pass" class="block w-full text-sm bg-slate-800/80 border-slate-600 rounded-lg shadow-sm py-2.5 px-4 focus:ring-2 focus:ring-lime-400 focus:border-lime-400 focus:outline-none transition-all" placeholder="Enter password" required>
+                                </div>
+                            </div>
+                            <button type="submit" id="run-optimize-btn" class="w-full flex justify-center py-3 px-4 rounded-lg shadow-lg shadow-amber-500/20 text-sm font-bold text-white bg-amber-600 hover:bg-amber-700 hover:shadow-amber-500/40 focus:outline-none focus:ring-4 focus:ring-amber-500/50 active:scale-[0.98] transition-all duration-200">Show & Compare</button>
+                        </fieldset>
+                    </form>
+                    
+                    <div id="optimizer-controls" class="mt-6 hidden">
+                        <p class="text-center text-yellow-400 mb-4 text-sm">Please review the configuration changes below before committing.</p>
+                        <button type="button" id="commit-btn" class="w-full flex justify-center py-3 px-4 rounded-lg shadow-lg shadow-green-500/20 text-sm font-bold text-white bg-green-600 hover:bg-green-700 hover:shadow-green-500/40 focus:outline-none focus:ring-4 focus:ring-green-500/50 active:scale-[0.98] transition-all duration-200">
+                            Confirm and Commit Changes
+                        </button>
+                    </div>
+
+                    <div class="mt-8 pt-6 border-t border-red-500/20">
+                        <h2 class="text-xl font-semibold text-center mb-4 text-red-400">Logs</h2>
+                        <div id="optimize-loader" style="display: none;">
+                            <div class="w-10 h-10 border-4 border-slate-600 border-t-red-500 rounded-full animate-spin mx-auto"></div>
+                        </div>
+                        <pre id="optimize-results" class="bg-gray-950/70 rounded-lg p-4 font-mono text-sm overflow-x-auto min-h-[50px] transition-all"></pre>
+                    </div>
+
+                    <!-- ===== DELETE OPTIMIZATION SECTION ===== -->
+                    <div class="mt-10 pt-8 border-t border-rose-500/30">
+                        <div class="text-center mb-6">
+                            <h2 class="text-xl font-semibold text-rose-400">&#128465;&#65039; Delete Optimization</h2>
+                            <p class="text-slate-400 text-sm mt-1">Xoa static route discard va xoa dest khoi prefix-list hien tai tren thiet bi.</p>
+                        </div>
+                        <form id="delete-optimize-form" autocomplete="off">
+                            <fieldset id="delete-optimize-fieldset">
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                                    <div>
+                                        <label for="delete-dest" class="block text-sm font-medium text-slate-300 mb-2">Destination IP to Remove</label>
+                                        <input type="text" id="delete-dest" class="block w-full text-sm bg-slate-800/80 border-slate-600 rounded-lg shadow-sm py-2.5 px-4 focus:ring-2 focus:ring-rose-400 focus:border-rose-400 focus:outline-none transition-all" placeholder="e.g., 8.8.8.8/32" required>
+                                    </div>
+                                    <div>
+                                        <label for="delete-juniper-user" class="block text-sm font-medium text-slate-300 mb-2">TACACS+ Username</label>
+                                        <div class="relative">
+                                            <select id="delete-juniper-user" class="block w-full text-sm bg-slate-800/80 border-slate-600 rounded-lg shadow-sm py-2.5 pl-4 pr-10 focus:ring-2 focus:ring-rose-400 focus:border-rose-400 focus:outline-none transition-all appearance-none"></select>
+                                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-400">
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.5 8.25l-7.5 7.5-7.5-7.5"></path></svg>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label for="delete-juniper-pass" class="block text-sm font-medium text-slate-300 mb-2">TACACS+ Password</label>
+                                        <input type="password" id="delete-juniper-pass" class="block w-full text-sm bg-slate-800/80 border-slate-600 rounded-lg shadow-sm py-2.5 px-4 focus:ring-2 focus:ring-rose-400 focus:border-rose-400 focus:outline-none transition-all" placeholder="Enter password" required>
+                                    </div>
+                                </div>
+                                <button type="submit" id="run-delete-compare-btn" class="w-full flex justify-center py-3 px-4 rounded-lg shadow-lg shadow-rose-500/20 text-sm font-bold text-white bg-rose-700 hover:bg-rose-600 hover:shadow-rose-500/40 focus:outline-none focus:ring-4 focus:ring-rose-500/50 active:scale-[0.98] transition-all duration-200">Show &amp; Compare (Delete)</button>
+                            </fieldset>
+                        </form>
+
+                        <div id="delete-optimizer-controls" class="mt-6 hidden">
+                            <p class="text-center text-rose-300 mb-4 text-sm font-semibold">&#9888;&#65039; Review the commands below &mdash; this action CANNOT be easily undone!</p>
+                            <button type="button" id="delete-commit-btn" class="w-full flex justify-center py-3 px-4 rounded-lg shadow-lg shadow-red-700/30 text-sm font-bold text-white bg-red-700 hover:bg-red-600 focus:outline-none focus:ring-4 focus:ring-red-500/50 active:scale-[0.98] transition-all duration-200">
+                                Confirm and COMMIT Delete
+                            </button>
+                        </div>
+
+                        <div class="mt-6">
+                            <div id="delete-optimize-loader" style="display: none;">
+                                <div class="w-10 h-10 border-4 border-slate-600 border-t-rose-500 rounded-full animate-spin mx-auto"></div>
+                            </div>
+                            <pre id="delete-optimize-results" class="bg-gray-950/70 rounded-lg p-4 font-mono text-sm overflow-x-auto min-h-[50px] transition-all"></pre>
+                        </div>
+                    </div>
+                </div>
+            <div id="content-inbound" class="tab-content hidden">
+                <div class="text-center mb-8">
+                    <h1 class="text-3xl md:text-4xl font-bold text-white tracking-tight">
+                        <span class="text-2xl animate-twinkle-title">✨</span>
+                        Inbound Optimizer (BGP Community)
+                        <span class="text-2xl animate-twinkle-title" style="animation-delay: 0.2s;">✨</span></h1>
+                    <p class="text-red-400/80 mt-2 font-semibold">Caution: This will change network configuration.</p>
+                </div>
+                <form id="inbound-form" autocomplete="off">
+                    <fieldset id="inbound-fieldset">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                            <div>
+                                <label for="inbound-prefix-input" class="block text-sm font-medium text-slate-300 mb-2">Source Prefix</label>
+                                <div class="relative" id="inbound-prefix-container">
+                                    <input type="text" id="inbound-prefix-input" class="block w-full text-sm bg-slate-800/80 border-slate-600 rounded-lg shadow-sm py-2.5 px-4 focus:ring-2 focus:ring-lime-400 focus:border-lime-400 focus:outline-none transition-all" placeholder="Select or search for a prefix...">
+                                    <input type="hidden" id="inbound-prefix-hidden-value">
+                                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-400">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.5 8.25l-7.5 7.5-7.5-7.5"></path></svg>
+                                    </div>
+                                    <div id="inbound-prefix-options-container" class="absolute z-10 w-full bg-slate-800 border border-slate-700 rounded-lg mt-1 shadow-lg max-h-60 overflow-y-auto hidden"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <label for="inbound-upstream-select" class="block text-sm font-medium text-slate-300 mb-2">Upstream</label>
+                                <div class="relative">
+                                    <select id="inbound-upstream-select" placeholder="Select an upstream..." class="block w-full text-sm bg-slate-800/80 border-slate-600 rounded-lg shadow-sm py-2.5 pl-4 pr-10 focus:ring-2 focus:ring-lime-400 focus:border-lime-400 focus:outline-none transition-all appearance-none"></select>
+                                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-400">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.5 8.25l-7.5 7.5-7.5-7.5"></path></svg>
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <label for="inbound-action-select" class="block text-sm font-medium text-slate-300 mb-2">Action</label>
+                                <div class="relative">
+                                    <select id="inbound-action-select" placeholder="Select an action..." class="block w-full text-sm bg-slate-800/80 border-slate-600 rounded-lg shadow-sm py-2.5 pl-4 pr-10 focus:ring-2 focus:ring-lime-400 focus:border-lime-400 focus:outline-none transition-all appearance-none"></select>
+                                    
+                                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-400">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.5 8.25l-7.5 7.5-7.5-7.5"></path></svg>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                            <div>
+                                <label for="inbound-user" class="block text-sm font-medium text-slate-300 mb-2">TACACS+ Username</label>
+                                <div class="relative">
+                                    <select id="inbound-user" class="block w-full text-sm bg-slate-800/80 border-slate-600 rounded-lg shadow-sm py-2.5 pl-4 pr-10 focus:ring-2 focus:ring-lime-400 focus:border-lime-400 focus:outline-none transition-all appearance-none">
+                                        </select>
+                                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-400">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.5 8.25l-7.5 7.5-7.5-7.5"></path></svg>
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <label for="inbound-pass" class="block text-sm font-medium text-slate-300 mb-2">TACACS+ Password</label>
+                                <input type="password" id="inbound-pass" class="block w-full text-sm bg-slate-800/80 border-slate-600 rounded-lg shadow-sm py-2.5 px-4 focus:ring-2 focus:ring-lime-400 focus:border-lime-400 focus:outline-none transition-all" placeholder="Enter password" required>
+                            </div>
+                        </div>
+                        <button type="submit" id="run-inbound-compare-btn" class="w-full flex justify-center py-3 px-4 rounded-lg shadow-lg shadow-amber-500/20 text-sm font-bold text-white bg-amber-600 hover:bg-amber-700 hover:shadow-amber-500/40 focus:outline-none focus:ring-4 focus:ring-amber-500/50 active:scale-[0.98] transition-all duration-200">Show & Compare</button>
+                    </fieldset>
+                </form>
+                
+                <div id="inbound-optimizer-controls" class="mt-6 hidden">
+                    <p class="text-center text-yellow-400 mb-4 text-sm">Please review the configuration changes below before committing.</p>
+                    <button type="button" id="inbound-commit-btn" class="w-full flex justify-center py-3 px-4 rounded-lg shadow-lg shadow-green-500/20 text-sm font-bold text-white bg-green-600 hover:bg-green-700 hover:shadow-green-500/40 focus:outline-none focus:ring-4 focus:ring-green-500/50 active:scale-[0.98] transition-all duration-200">
+                        Confirm and Commit Changes
+                    </button>
+                </div>
+
+                <div class="mt-8 pt-6 border-t border-red-500/20">
+                    <h2 class="text-xl font-semibold text-center mb-4 text-red-400">Logs</h2>
+                    <div id="inbound-loader" style="display: none;">
+                        <div class="w-10 h-10 border-4 border-slate-600 border-t-red-500 rounded-full animate-spin mx-auto"></div>
+                    </div>
+                    <pre id="inbound-results" class="bg-gray-950/70 rounded-lg p-4 font-mono text-sm overflow-x-auto min-h-[50px] transition-all"></pre>
+                </div>
+            </div>   
+            </div>
+        </div>
+        <div id="results-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-gray-950/60 backdrop-blur-xl border border-slate-700 rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col">
+            <div class="relative p-4 border-b border-slate-800 flex-shrink-0">
+                <h2 class="text-xxl font-semibold text-lime-400 text-center">TEST RESULTS</h2>
+                <button id="close-modal-btn" class="absolute top-0 right-0 mt-3 mr-4 text-slate-400 hover:text-white text-3xl leading-none">&times;</button>
+            </div>
+            <div id="modal-content" class="px-6 pb-6 pt-0.25 overflow-auto">
+                </div>
+        </div>
+    </div>
+    </div>
+    
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // --- State Management ---
+        let currentTestData = { headers: [], rows: [] };
+        let currentSort = { key: 'Avg', direction: 'asc' };
+        let pendingCommitData = null;
+        let twoIpSourceList = [];
+        let allTestSources = []; 
+        let bgpCommunities = {};
+        let pendingInboundCommitData = null;
+        let inboundPrefixSelect, inboundUpstreamSelect, inboundActionSelect;
+        let allInboundPrefixes = [];
+        
+        // --- DOM Elements ---
+        const testForm = document.getElementById('test-form');
+        const testFieldset = document.getElementById('form-fieldset');
+        const testTypeGroup = document.getElementById('test-type-group');
+        const sourceContainer = document.getElementById('source-container');
+        const sourceInput = document.getElementById('source-input');
+        const sourceHiddenValue = document.getElementById('source-hidden-value');
+        const sourceOptionsContainer = document.getElementById('source-options-container');
+        const resultsTableContainer = document.getElementById('results-table-container');
+        const rawResultsPre = document.getElementById('raw-results');
+        const testLoader = document.getElementById('loader');
+        const domainInput = document.getElementById('domain-input');
+        const nslookupBtn = document.getElementById('nslookup-btn');
+        const nslookupResultsPre = document.getElementById('nslookup-results');
+        const portContainer = document.getElementById('port-container');
+        const countContainer = document.querySelector('#count').parentElement; // Lấy div cha của Count
+        const intervalContainer = document.querySelector('#interval').parentElement;
+
+        const resultsModal = document.getElementById('results-modal');
+        const modalContent = document.getElementById('modal-content');
+        const closeModalBtn = document.getElementById('close-modal-btn');
+        
+        const tabTest = document.getElementById('tab-test');
+        const tabOptimize = document.getElementById('tab-optimize');
+        const contentTest = document.getElementById('content-test');
+        const contentOptimize = document.getElementById('content-optimize');
+
+        const defaultControls = document.getElementById('default-controls');
+        const comparisonControls = document.getElementById('comparison-controls');
+        const runComparisonBtn = document.getElementById('run-comparison-button');
+        const comparisonResultsContainer = document.getElementById('comparison-results-container');
+
+        const optimizeForm = document.getElementById('optimize-form');
+        const optimizeFieldset = document.getElementById('optimize-fieldset');
+        const optimizeUpstreamSelect = document.getElementById('optimize-upstream');
+        const optimizeResultsPre = document.getElementById('optimize-results');
+        const optimizeLoader = document.getElementById('optimize-loader');
+        const optimizerControls = document.getElementById('optimizer-controls');
+        const commitBtn = document.getElementById('commit-btn');
+        // INBOUND
+        const tabInbound = document.getElementById('tab-inbound');
+        const contentInbound = document.getElementById('content-inbound');
+        const inboundForm = document.getElementById('inbound-form');
+        const inboundFieldset = document.getElementById('inbound-fieldset');
+        const inboundPrefixSelectEl = document.getElementById('inbound-prefix-select');
+        const inboundUpstreamSelectEl = document.getElementById('inbound-upstream-select');
+        const inboundActionSelectEl = document.getElementById('inbound-action-select');
+        const inboundLoader = document.getElementById('inbound-loader');
+        const inboundResultsPre = document.getElementById('inbound-results');
+        const inboundOptimizerControls = document.getElementById('inbound-optimizer-controls');
+        const inboundCommitBtn = document.getElementById('inbound-commit-btn');
+        const inboundPrefixContainer = document.getElementById('inbound-prefix-container');
+        const inboundPrefixInput = document.getElementById('inbound-prefix-input');
+        const inboundPrefixHiddenValue = document.getElementById('inbound-prefix-hidden-value');
+        const inboundPrefixOptionsContainer = document.getElementById('inbound-prefix-options-container');
+        
+        const destInput = document.getElementById('dest');
+        const ispSuggestionDiv = document.getElementById('isp-suggestion');
+
+        const starContainer = document.getElementById('star-container');
+        if (starContainer) { for (let i = 0; i < 150; i++) { const star = document.createElement('div'); star.className = 'absolute bg-white rounded-full animate-starfall'; const size = Math.random() * 2 + 0.5; star.style.width = `${size}px`; star.style.height = `${size}px`; star.style.left = `${Math.random() * 100}%`; star.style.animationDuration = `${Math.random() * 3 + 2}s`; star.style.animationDelay = `${Math.random() * 5}s`; star.style.opacity = Math.random() * 0.5 + 0.5; starContainer.appendChild(star); } }
+
+        // --- Core Functions ---
+        function debounce(func, delay) {
+            let timeout;
+            return function(...args) {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(this, args), delay);
+            };
+        }
+        
+
+
+        function renderOptions(container, options, inputEl, hiddenInputEl) {
+            container.innerHTML = '';
+            if (options.length === 0) {
+                container.innerHTML = '<div class="custom-select-option text-slate-500">No results found</div>';
+                return;
+            }
+            options.forEach(opt => {
+                const optionDiv = document.createElement('div');
+                if (opt.type === 'label') {
+                    optionDiv.className = 'custom-select-option optgroup-label';
+                    optionDiv.textContent = opt.text;
+                } else {
+                    optionDiv.className = 'custom-select-option';
+                    optionDiv.textContent = opt.text;
+                    optionDiv.dataset.value = opt.value;
+                    optionDiv.addEventListener('mousedown', (e) => {
+                        e.preventDefault();
+                        inputEl.value = opt.text;
+                        hiddenInputEl.value = opt.value;
+                        container.classList.add('hidden');
+                    });
+                }
+                container.appendChild(optionDiv);
+            });
+        }
+
+        function setupDropdown(container, input, optionsContainer, allOptions, hiddenInput) {
+            input.addEventListener('input', () => {
+                const searchTerm = input.value.toLowerCase();
+                const filtered = allOptions.filter(opt => opt.type === 'label' || opt.text.toLowerCase().includes(searchTerm));
+                renderOptions(optionsContainer, filtered, input, hiddenInput);
+            });
+            input.addEventListener('focus', () => {
+                renderOptions(optionsContainer, allOptions, input, hiddenInput);
+                optionsContainer.classList.remove('hidden');
+            });
+            document.addEventListener('click', (e) => {
+                if (!container.contains(e.target)) {
+                    optionsContainer.classList.add('hidden');
+                }
+            });
+        }
+
+        function generateResultTableHTML(data) {
+            let tableRows = '';
+            let commandHtml= '';
+            if (data.executed_command) {
+                commandHtml = `
+                    <div class="mb-4">
+                        <label class="block text-xs font-medium text-slate-400">Executed Command:</label>
+                        <pre class="text-xs p-2 bg-slate-900 rounded-md mt-1 text-bold text-pink-400">${data.executed_command}</pre>
+                    </div>
+                `;
+            }
+            data.rows.forEach(rowData => {
+                let cells = '';
+                data.headers.forEach(header => {
+                    let value = rowData[header];
+                    if (header === 'Loss') value = `${value}%`;
+                    if (['Avg', 'Min', 'Max', 'Mdev'].includes(header)) value = `${value} ms`;
+                    cells += `<td class="px-4 py-3">${value}</td>`;
+                });
+                tableRows += `<tr class="border-b border-slate-800">${cells}</tr>`;
+            });
+
+            const tableHeaders = data.headers.map(key => {
+                // Kiểm tra xem đây có phải là cột đang được sort không để thêm icon
+                const sortClasses = currentSort.key === key
+                    ? (currentSort.direction === 'asc' ? 'sort-asc' : 'sort-desc')
+                    : '';
+                // Thêm class 'sortable' và data-sort-key
+                return `<th scope="col" class="px-4 py-3 bg-pink-900 sortable ${sortClasses}" data-sort-key="${key}">${key}</th>`;
+            }).join('');
+
+            return commandHtml + `
+                <table class="w-full text-sm text-left text-white-400">
+                    <thead class="text-xs text-yellow-400 uppercase sticky top-0 z-10">
+                        <tr>${tableHeaders}</tr>
+                    </thead>
+                    <tbody>
+                        ${tableRows}
+                    </tbody>
+                </table>
+            `;
+        }
+
+        async function handleIspSuggestion(event) {
+            const destIp = event.target.value.trim();
+            const ispSuggestionDiv = document.getElementById('isp-suggestion');
+
+            if (!destIp) {
+                ispSuggestionDiv.innerHTML = '';
+                return;
+            }
+            
+            ispSuggestionDiv.innerHTML = '<span>Checking...</span>';
+
+            try {
+                const response = await fetch('/suggest-isp', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ dest_ip: destIp }),
+                });
+                const result = await response.json();
+
+                let html = '';
+                if (result.error) {
+                    html = `<span class="text-red-400">${result.error}</span>`;
+                } else {
+                    // Cập nhật để đọc trường 'org' thay vì 'isp' và 'as_info'
+                    if (result.org) {
+                        html += `<div><strong>ISP/AS:</strong> ${result.org}</div>`;
+                    }
+                    if (result.country) {
+                        html += `<div><strong>Country:</strong> ${result.country}</div>`;
+                    }
+                    if (result.suggestion) {
+                        html += `<div class="text-lime-400 mt-1"><strong>💡 Suggestion:</strong> ${result.suggestion}</div>`;
+                    }
+                }
+                ispSuggestionDiv.innerHTML = html;
+
+            } catch (error) {
+                ispSuggestionDiv.innerHTML = '<span class="text-red-400">Could not fetch suggestion.</span>';
+            }
+        }
+        
+        async function loadJuniperUsers() {
+            const juniperUserSelectEl = document.getElementById('juniper-user');
+            const inboundUserSelectEl = document.getElementById('inbound-user');
+            const deleteUserSelectEl = document.getElementById('delete-juniper-user');
+            try {
+                const response = await fetch('/get-juniper-users');
+                const users = await response.json();
+                const userOptionsHTML = users.map(u => `<option value="${u}">${u}</option>`).join('');
+                if (juniperUserSelectEl) {
+                    juniperUserSelectEl.innerHTML = userOptionsHTML;
+                }
+                if (inboundUserSelectEl) {
+                    inboundUserSelectEl.innerHTML = userOptionsHTML;
+                }
+                if (deleteUserSelectEl) {
+                    deleteUserSelectEl.innerHTML = userOptionsHTML;
+                }
+            } catch (e) {
+                console.error("Error loading Juniper users", e);
+                const errorMsg = `<option>Error</option>`;
+                if (juniperUserSelectEl) juniperUserSelectEl.innerHTML = errorMsg;
+                if (inboundUserSelectEl) inboundUserSelectEl.innerHTML = errorMsg;
+                if (deleteUserSelectEl) deleteUserSelectEl.innerHTML = errorMsg;
+            }
+        }
+
+        async function loadPredefinedSources() {
+            // Get elements
+            const sourceOptionsContainer = document.getElementById('source-options-container');
+            const optimizeUpstreamSelectEl = document.getElementById('optimize-upstream');
+
+            try {
+                const response = await fetch('/get-predefined-sources');
+                const sources = await response.json();
+                
+                // --- Logic cho tab Network Test (Custom Dropdown) ---
+                allTestSources = []; //Clear old data
+                allTestSources.push({ type: 'option', value: "all", text: "All Source IPs" });
+                allTestSources.push({ type: 'option', value: "upstream", text: "All Upstreams" });
+
+                if (Object.keys(sources).length > 0) {
+                    for (const name in sources) {
+                        allTestSources.push({ type: 'option', value: name, text: name });
+                    }
+                }
+                //Call render for custom dropdown
+                renderSourceOptions(allTestSources);
+
+                // --- Logic cho tab Optimizer (Standard Dropdown, đã lọc) ---
+                optimizeUpstreamSelectEl.innerHTML = ''; // Xóa placeholder "Loading..."
+                const UpstreamForOptimizer = ['IPTP-SG (119.17.238.0)', 
+                                              'IPTP-HKG (101.53.63.0)', 
+                                              'NTT-HKG (101.53.55.0)',  
+                                              'VIETTEL-QT (101.53.60.0)', 
+                                              'CMC-QT (101.53.50.0)', 
+                                              'LUMEN-HK (101.53.46.0)', 
+                                              'VNPT-QT (119.15.178.0)',
+                                              'LUMEN-SGP (101.53.48.0)'
+                                            ];
+
+                const optimizerUpstreams = Object.keys(sources)
+                    .filter(upstreamName => UpstreamForOptimizer.includes(upstreamName));
+                    
+                if (optimizerUpstreams.length > 0) {
+                    optimizerUpstreams.forEach(name => {
+                        const option = document.createElement('option');
+                        option.value = name;
+                        option.textContent = `${(name)}`;
+                        optimizeUpstreamSelectEl.appendChild(option);
+                    });
+                } else {
+                    optimizeUpstreamSelectEl.innerHTML = '<option value="" disabled>No optimizable upstreams</option>';
+                }
+
+            } catch (error) {
+                console.error("Failed to load predefined sources:", error);
+                if(sourceOptionsContainer) sourceOptionsContainer.innerHTML = '<div class="custom-select-option text-red-400">Failed to load</div>';
+                if(optimizeUpstreamSelectEl) optimizeUpstreamSelectEl.innerHTML = '<option value="" disabled>Failed to load sources</option>';
+            }
+        }
+        
+        function handleTracerouteSource() {
+            const sourceSelectEl = document.getElementById('source-select');
+            const isTraceroute = document.querySelector('input[name="test-type"]:checked').value === 'traceroute';
+            
+            // Lặp qua các option và vô hiệu hóa/kích hoạt
+            for (const option of sourceSelectEl.options) {
+                if (option.value === 'all' || option.value === 'upstream') {
+                    option.disabled = isTraceroute;
+                }
+            }
+            
+            // Tự động chuyển lựa chọn nếu lựa chọn hiện tại bị vô hiệu hóa
+            if (isTraceroute && (sourceSelectEl.value === 'all' || sourceSelectEl.value === 'upstream')) {
+                for (const option of sourceSelectEl.options) {
+                    if (!option.disabled && option.value) {
+                        sourceSelectEl.value = option.value;
+                        break;
+                    }
+                }
+            }
+        }
+
+        async function onUpstreamChange() {
+
+            const upstreamSelectEl = document.getElementById('source-upstream-select');
+            const specificIpContainer = document.getElementById('specific-ip-container');
+            const specificIpSelect = document.getElementById('specific-ip-select');
+            const defaultControls = document.getElementById('default-controls');
+            const comparisonControls = document.getElementById('comparison-controls');
+
+            const selectedUpstream = upstreamSelectEl.value;
+            defaultControls.classList.remove('hidden');
+            comparisonControls.classList.add('hidden');
+            specificIpContainer.classList.add('hidden');
+            twoIpSourceList = [];
+
+            if (!selectedUpstream || selectedUpstream === 'all' || selectedUpstream === 'upstream') {
+                return;
+            }
+
+            try {
+                const response = await fetch('/get-ips-for-upstream', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ upstream_name: selectedUpstream }),
+                });
+                const result = await response.json();
+                
+                if (result.ips && result.ips.length === 2) {
+                    // Nếu có đúng 2 IP, chuyển sang giao diện so sánh
+                    defaultControls.classList.add('hidden');
+                    comparisonControls.classList.remove('hidden');
+                    twoIpSourceList = result.ips;
+                }
+                else if (result.ips && result.ips.length > 0) {
+                    specificIpSelect.innerHTML = result.ips.map(ip => `<option value="${ip}">${ip}</option>`).join('');
+                    specificIpContainer.classList.remove('hid
