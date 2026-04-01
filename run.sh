@@ -30,7 +30,7 @@ sudo docker run -d \
 
 echo ""
 echo "✅ Container is running!"
-echo "   Access: http://$(hostname -I | awk '{print $1}'):8081"
+echo "   Access: http://$(hostname -I | awk '{print $1}'):8001"
 echo ""
 echo "   View logs : sudo docker logs -f $CONTAINER_NAME"
 echo "   Stop     : sudo docker stop $CONTAINER_NAME"
